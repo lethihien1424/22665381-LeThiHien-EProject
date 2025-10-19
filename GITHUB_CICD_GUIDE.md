@@ -300,3 +300,14 @@ CI/CD pipeline thành công khi:
 ---
 
 **🚀 Ready to go! Your CI/CD pipeline is now fully configured and ready for production use!**
+GitHub Actions CI/CD giúp bạn tự động hóa toàn bộ quy trình kiểm thử, build, và triển khai dự án.
+🔹 Mỗi lần commit, hệ thống tự:
+
+kiểm tra code,
+
+build Docker,
+
+đẩy lên Docker Hub,
+
+triển khai lên server staging/production.
+🔹 Giúp bạn phát hiện lỗi sớm, triển khai nhanh, giảm rủi ro và tiết kiệm thời gian.

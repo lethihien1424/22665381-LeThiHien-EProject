@@ -1,54 +1,56 @@
-# Multi-stage build cho Order Service
+# -------------------------------
+# Stage 1: Base Image
+# -------------------------------
 FROM node:18-alpine AS base
 
-# Cài đặt dumb-init và curl cho health checks
+# Cài các gói cần thiết
 RUN apk add --no-cache dumb-init curl
 
-# Tạo user non-root cho security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodeuser -u 1001
+# Tạo user không phải root để tăng bảo mật
+RUN addgroup -S nodejs && adduser -S nodeuser -G nodejs
 
-# Stage development
-FROM base AS development
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --include=dev
+
+# -------------------------------
+# Stage 2: Development (optional)
+# -------------------------------
+FROM base AS development
+RUN npm install
 COPY . .
 RUN chown -R nodeuser:nodejs /app
 USER nodeuser
+
 EXPOSE 3002
+
+# Health check endpoint (bắt buộc có trong code)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3002/health || exit 1
+
 CMD ["dumb-init", "node", "index.js"]
 
-# Stage production
+# -------------------------------
+# Stage 3: Production
+# -------------------------------
 FROM base AS production
-WORKDIR /app
 
-# Copy package files và install production dependencies
-COPY package*.json ./
+# Cài chỉ dependency cần thiết (nhanh + nhẹ)
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy source code
 COPY . .
-
-# Remove cache
 RUN rm -rf node_modules/.cache
-
-# Set permissions
 RUN chown -R nodeuser:nodejs /app
 USER nodeuser
 
 EXPOSE 3002
 
-# Health check
+# Health check endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:3002/health || exit 1
 
-# Labels
+# Label metadata
 LABEL org.opencontainers.image.title="EProject Order Service"
 LABEL org.opencontainers.image.description="Order management microservice for EProject"
+LABEL maintainer="Luong Tan <your-email@example.com>"
 
 CMD ["dumb-init", "node", "index.js"]
-
-FROM production AS final
