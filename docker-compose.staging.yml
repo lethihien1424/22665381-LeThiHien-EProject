@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  auth-service:
+    image: ${DOCKER_USERNAME}/eproject-auth:${VERSION:-latest}
+    environment:
+      - NODE_ENV=staging
+      - JWT_SECRET=${JWT_SECRET}
+      - MONGO_URI=${MONGO_URI_STAGING}
+      - RABBITMQ_URL=${RABBITMQ_URL_STAGING}
+    ports:
+      - "3001:3000"
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - eproject-network
+
+  product-service:
+    image: ${DOCKER_USERNAME}/eproject-product:${VERSION:-latest}
+    environment:
+      - NODE_ENV=staging
+      - MONGO_URI=${MONGO_URI_STAGING}
+      - RABBITMQ_URL=${RABBITMQ_URL_STAGING}
+    ports:
+      - "3002:3000"
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - eproject-network
+
+  order-service:
+    image: ${DOCKER_USERNAME}/eproject-order:${VERSION:-latest}
+    environment:
+      - NODE_ENV=staging
+      - MONGO_URI=${MONGO_URI_STAGING}
+      - RABBITMQ_URL=${RABBITMQ_URL_STAGING}
+    ports:
+      - "3003:3000"
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - eproject-network
+
+  api-gateway:
+    image: ${DOCKER_USERNAME}/eproject-api-gateway:${VERSION:-latest}
+    environment:
+      - NODE_ENV=staging
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - PRODUCT_SERVICE_URL=http://product-service:3000
+      - ORDER_SERVICE_URL=http://order-service:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - product-service
+      - order-service
+    networks:
+      - eproject-network
+
+  mongodb:
+    image: mongo:6
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data_staging:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - eproject-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    volumes:
+      - rabbitmq_data_staging:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - eproject-network
+
+volumes:
+  mongodb_data_staging:
+  rabbitmq_data_staging:
+
+networks:
+  eproject-network:
+    driver: bridge

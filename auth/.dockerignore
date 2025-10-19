@@ -1,0 +1,43 @@
+# Node modules sẽ được cài đặt lại trong container
+node_modules/
+npm-debug.log*
+
+# Git files
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Test files (chỉ exclude trong production build)
+src/test/
+*.test.js
+coverage/
+
+# Environment files (sẽ được set qua ENV variables)
+.env*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+.tmp/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+
+# Build artifacts
+dist/
+build/

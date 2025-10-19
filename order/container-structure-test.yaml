@@ -1,0 +1,60 @@
+schemaVersion: '2.0.0'
+
+# Test cấu trúc container cho Order Service
+commandTests:
+  - name: 'node version check'
+    command: 'node'
+    args: ['--version']
+    expectedOutput: ['v18.*']
+  
+  - name: 'npm version check'
+    command: 'npm'
+    args: ['--version']
+    expectedOutput: ['.*']
+
+  - name: 'check if order service is executable'
+    command: 'node'
+    args: ['/app/index.js']
+    exitCode: 0
+    timeout: 10
+
+fileExistenceTests:
+  - name: 'app entry point exists'
+    path: '/app/index.js'
+    shouldExist: true
+
+  - name: 'package.json exists'
+    path: '/app/package.json'
+    shouldExist: true
+
+  - name: 'node_modules exists'
+    path: '/app/node_modules'
+    shouldExist: true
+
+  - name: 'source directory exists'
+    path: '/app/src'
+    shouldExist: true
+
+  - name: 'order model exists'
+    path: '/app/src/models/order.js'
+    shouldExist: true
+
+  - name: 'message broker utility exists'
+    path: '/app/src/utils/messageBroker.js'
+    shouldExist: true
+
+  - name: 'auth middleware exists'
+    path: '/app/src/utils/isAuthenticated.js'
+    shouldExist: true
+
+fileContentTests:
+  - name: 'package.json has correct main entry'
+    path: '/app/package.json'
+    expectedContents: ['.*"main".*"index.js".*']
+
+metadataTest:
+  exposedPorts: ["3002"]
+  env:
+    - key: 'NODE_ENV'
+      value: 'production'
+  workdir: '/app'

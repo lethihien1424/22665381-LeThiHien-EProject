@@ -1,0 +1,63 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Docker daemon metrics
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Application services
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'product-service'
+    static_configs:
+      - targets: ['product:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['order:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # MongoDB metrics
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+
+  # RabbitMQ metrics
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
