@@ -1,146 +1,149 @@
 const Product = require("../models/product");
+const Order = require("../models/order");
 const messageBroker = require("../utils/messageBroker");
 const uuid = require("uuid");
 
-/**
- * Class to hold the API implementation for the product services
- */
 class ProductController {
   constructor() {
     this.createOrder = this.createOrder.bind(this);
-    this.getOrderStatus = this.getOrderStatus.bind(this);
-    this.ordersMap = new Map();
+    this.getOrderById = this.getOrderById.bind(this);
   }
 
-  async createProduct(req, res, next) {
+  // CREATE PRODUCT
+  async createProduct(req, res) {
     try {
       const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      if (!token) return res.status(401).json({ message: "Unauthorized" });
+
       const product = new Product(req.body);
-
       const validationError = product.validateSync();
-      if (validationError) {
+      if (validationError)
         return res.status(400).json({ message: validationError.message });
-      }
 
-      await product.save({ timeout: 30000 });
-
+      await product.save();
       res.status(201).json(product);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   }
 
-  async createOrder(req, res, next) {
+  // GET ALL PRODUCTS
+  async getProducts(req, res) {
     try {
       const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-      const { ids } = req.body;
-      const products = await Product.find({ _id: { $in: ids } });
-
-      const orderId = uuid.v4(); // Generate a unique order ID
-      this.ordersMap.set(orderId, {
-        status: "pending",
-        products,
-        username: req.user.username,
-      });
-
-      await messageBroker.publishMessage("orders", {
-        products,
-        username: req.user.username,
-        orderId, // include the order ID in the message to orders queue
-      });
-
-      messageBroker.consumeMessage("products", (data) => {
-        const orderData = JSON.parse(JSON.stringify(data));
-        const { orderId } = orderData;
-        const order = this.ordersMap.get(orderId);
-        if (order) {
-          // update the order in the map
-          this.ordersMap.set(orderId, {
-            ...order,
-            ...orderData,
-            status: "completed",
-          });
-          console.log("Updated order:", order);
-        }
-      });
-
-      // Long polling until order is completed
-      let order = this.ordersMap.get(orderId);
-      while (order.status !== "completed") {
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for 1 second before checking status again
-        order = this.ordersMap.get(orderId);
-      }
-
-      // Once the order is marked as completed, return the complete order details
-      return res.status(201).json(order);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-
-  async getOrderStatus(req, res, next) {
-    const { orderId } = req.params;
-    const order = this.ordersMap.get(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-    return res.status(200).json(order);
-  }
-
-  async getProducts(req, res, next) {
-    try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      const products = await Product.find({});
-
+      const products = await Product.find();
       res.status(200).json(products);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   }
 
-  async getProductById(req, res, next) {
+  // GET PRODUCT BY ID
+  async getProductById(req, res) {
     try {
-      // Kiểm tra authorization token
       const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-      // Lấy ID từ URL parameters
       const { id } = req.params;
-
-      // Tìm sản phẩm trong database bằng ID
       const product = await Product.findById(id);
-
-      // Kiểm tra nếu không tìm thấy sản phẩm
-      if (!product) {
+      if (!product)
         return res.status(404).json({ message: "Product not found" });
+
+      res.status(200).json(product);
+    } catch (err) {
+      console.error(err);
+      if (err.name === "CastError")
+        return res.status(400).json({ message: "Invalid product ID" });
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  // CREATE ORDER
+  async createOrder(req, res) {
+    try {
+      const token = req.headers.authorization;
+      if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+      const { ids } = req.body; // array of product IDs
+      const products = await Product.find({ _id: { $in: ids } });
+      if (products.length === 0)
+        return res.status(400).json({ message: "No products found" });
+
+      const totalPrice = products.reduce((sum, p) => sum + p.price, 0);
+      const username = req.user?.username || req.user?.id || "unknown";
+
+      // Thêm trường orderId là UUID
+      const order = new Order({
+        orderId: uuid.v4(),
+        products: products.map((p) => p._id),
+        username,
+        status: "completed",
+        totalPrice,
+      });
+
+      await order.save();
+
+      // Publish message to broker (if cần)
+      await messageBroker.publishMessage("orders", {
+        orderId: order.orderId,
+        products,
+        username,
+        status: order.status,
+        totalPrice,
+      });
+
+      res.status(201).json(order);
+    } catch (err) {
+      console.error("[createOrder error]", err);
+      res.status(500).json({ message: "Server error", error: err.message });
+    }
+  }
+
+  // GET ORDER BY ID (support both query id and params id)
+  async getOrderById(req, res) {
+    try {
+      const token = req.headers.authorization;
+      if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+      // Lấy id từ query hoặc từ params
+      const id = req.query.id || req.params.id;
+      if (!id) return res.status(400).json({ message: "Order id is required" });
+
+      // Tìm theo Mongo ObjectId trước
+      let order = null;
+      try {
+        order = await Order.findById(id).populate("products");
+      } catch (err) {
+        // Nếu lỗi CastError, thử tìm theo trường orderId (UUID)
+        if (err.name !== "CastError") console.error(err);
       }
 
-      // Trả về thông tin sản phẩm
-      res.status(200).json(product);
-    } catch (error) {
-      console.error(error);
-      // Xử lý lỗi ID không đúng định dạng
-      if (error.name === "CastError") {
-        return res.status(400).json({ message: "Invalid product ID format" });
+      // Nếu không tìm thấy, thử tìm theo orderId (UUID)
+      if (!order) {
+        order = await Order.findOne({ orderId: id }).populate("products");
       }
+
+      if (!order) return res.status(404).json({ message: "Order not found" });
+
+      res.status(200).json(order);
+    } catch (err) {
+      console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   }
 }
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 module.exports = ProductController;

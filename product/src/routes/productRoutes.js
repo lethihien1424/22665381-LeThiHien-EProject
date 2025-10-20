@@ -2,12 +2,24 @@ const express = require("express");
 const ProductController = require("../controllers/productController");
 const isAuthenticated = require("../utils/isAuthenticated");
 
-const router = express.Router();
-const productController = new ProductController();
+console.log("[routes] productRoutes loaded");
 
-router.post("/", isAuthenticated, productController.createProduct);
-router.post("/buy", isAuthenticated, productController.createOrder);
-router.get("/", isAuthenticated, productController.getProducts);
-router.get("/:id", isAuthenticated, productController.getProductById);
-router.get("/:id", isAuthenticated, productController.getProductById); //them cai  nay
+const router = express.Router();
+const controller = new ProductController();
+
+// POST create product
+router.post("/", isAuthenticated, controller.createProduct);
+
+// POST create order
+router.post("/buy", isAuthenticated, controller.createOrder);
+
+// GET all products
+router.get("/", isAuthenticated, controller.getProducts);
+
+// GET order by ID (path param) - use orderId name for clarity
+router.get("/order/:id", isAuthenticated, controller.getOrderById);
+
+// GET product by ID
+router.get("/:id", isAuthenticated, controller.getProductById);
+
 module.exports = router;

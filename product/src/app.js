@@ -34,6 +34,9 @@ class App {
 
   setRoutes() {
     this.app.use("/api/products", productsRouter);
+    this.app.get("/health", (req, res) =>
+      res.status(200).json({ status: "ok" })
+    );
   }
 
   setupMessageBroker() {
