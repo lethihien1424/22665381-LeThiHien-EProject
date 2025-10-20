@@ -19,7 +19,7 @@ jobs:
       auth: ${{ steps.changes.outputs.auth }}
       product: ${{ steps.changes.outputs.product }}
       order: ${{ steps.changes.outputs.order }}
-      api-gateway: ${{ steps.changes.outputs.api-gateway }}
+      api-gateway: ${{ steps.changes.outputs['api-gateway'] }}
       infrastructure: ${{ steps.changes.outputs.infrastructure }}
     steps:
     - name: Checkout code
@@ -52,7 +52,7 @@ jobs:
       needs.detect-changes.outputs.auth == 'true' ||
       needs.detect-changes.outputs.product == 'true' ||
       needs.detect-changes.outputs.order == 'true' ||
-      needs.detect-changes.outputs.api-gateway == 'true'
+      needs.detect-changes.outputs['api-gateway'] == 'true'
     
     services:
       mongodb:
@@ -143,7 +143,7 @@ jobs:
         needs.detect-changes.outputs.auth == 'true' ||
         needs.detect-changes.outputs.product == 'true' ||
         needs.detect-changes.outputs.order == 'true' ||
-        needs.detect-changes.outputs.api-gateway == 'true'
+        needs.detect-changes.outputs['api-gateway'] == 'true'
       )
     
     strategy:
@@ -226,7 +226,7 @@ jobs:
       needs.detect-changes.outputs.auth == 'true' ||
       needs.detect-changes.outputs.product == 'true' ||
       needs.detect-changes.outputs.order == 'true' ||
-      needs.detect-changes.outputs.api-gateway == 'true'
+      needs.detect-changes.outputs['api-gateway'] == 'true'
     
     strategy:
       matrix:
@@ -252,7 +252,7 @@ jobs:
     
     - name: Upload Trivy scan results to GitHub Security tab
       if: steps.check-changes.outputs.changed == 'true'
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
 
