@@ -56,3 +56,5 @@ use order_db
 show collections
 db.orders.find().pretty()
 ![alt text](public/DockerOrders.png)
+Thao tác với github Action: Thực hiện CI/CD với dự án
+![alt text](public/CICD.png)
