@@ -50,7 +50,11 @@ jobs:
           context: ./${{ matrix.service }}
           file: ./${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/tulamhomnay:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/auth-cicd:latest
+            ${{ secrets.DOCKER_USERNAME }}/product-cicd:latest
+            ${{ secrets.DOCKER_USERNAME }}/order-cicd:latest
+            ${{ secrets.DOCKER_USERNAME }}/api-gateway-cicd:latest
 
   sonarcloud:
     name: SonarCloud Scan
