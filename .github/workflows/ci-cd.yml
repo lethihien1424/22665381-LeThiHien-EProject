@@ -62,7 +62,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # Job deploy lên staging
+  # Job deploy lên 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
