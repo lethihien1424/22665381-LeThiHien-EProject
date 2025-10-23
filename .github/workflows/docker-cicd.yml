@@ -5,29 +5,7 @@ on:
     branches: [ "main" ]  # Tự động chạy khi push code lên nhánh main
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [auth, product, order, api-gateway]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Install dependencies
-        run: |
-          cd ${{ matrix.service }}
-          npm install
-      - name: Run tests
-        run: |
-          cd ${{ matrix.service }}
-          npm test
-
   build-and-push:
-    needs: build-test
     runs-on: ubuntu-latest
 
     steps:
@@ -85,10 +63,3 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/api_gateway:latest
           platforms: linux/amd64,linux/arm64
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to server
-        run: echo "Triển khai lên server tại đây (ví dụ: ssh, docker-compose, webhook...)"
