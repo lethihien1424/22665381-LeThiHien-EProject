@@ -64,3 +64,4 @@ CICD lien kết  với  docker
 ![alt text](public/gitCICD_Docker.png)
 ![alt text](public/CICDdocker.png)
 ![alt text](public/cicd_Repositories.png)
+jj
