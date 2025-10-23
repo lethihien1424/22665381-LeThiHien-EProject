@@ -1,98 +1,65 @@
-services:
-  # MongoDB
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - eproject-network
+name: CI/CD Docker Pipeline
 
-  # RabbitMQ
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "5672:5672"
-      - "15672:15672" # web UI
-    # volumes:
-    #   - rabbitmq_data:/var/lib/rabbitmq
-    #   - rabbitmq_log:/var/log/rabbitmq
-    networks:
-      - eproject-network
+on:
+  push:
+    branches: [ "main" ]  # Tự động chạy khi push code lên nhánh main
 
-  # Auth service
-  auth:
-    build: ./auth
-    container_name: auth_service
-    env_file:
-      - ./auth/.env
-    ports:
-      - "3000:3000"
-    depends_on:
-      - mongodb
-      - rabbitmq
-    networks:
-      - eproject-network
-    command: ["node", "index.js"]
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
 
-  # Product service
-  product:
-    build: ./product
-    container_name: product_service
-    env_file:
-      - ./product/.env
-    ports:
-      - "3001:3001"
-    depends_on:
-      - mongodb
-      - rabbitmq
-    networks:
-      - eproject-network
-    command: ["node", "index.js"]
+    steps:
+      # 1. Lấy code từ GitHub repo
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # Order service
-  order:
-    build: ./order
-    container_name: order_service
-    env_file:
-      - ./order/.env
-    ports:
-      - "3002:3002"
-    depends_on:
-      - mongodb
-      - rabbitmq
-    networks:
-      - eproject-network
-    command: ["node", "index.js"]
-  # API Gateway
-  api-gateway:
-    build: ./api-gateway
-    container_name: api_gateway
-    env_file:
-      - ./api-gateway/.env
-    ports:
-      - "3003:3003"
-    depends_on:
-      auth:
-        condition: service_started
-      product:
-        condition: service_started
-      order:
-        condition: service_started
-    networks:
-      - eproject-network
-    command: ["node", "index.js"]
+      # 2. Thiết lập Docker Buildx để build đa nền tảng
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    
-volumes:
-  mongo_data:
+      # 3. Đăng nhập Docker Hub bằng secrets
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-networks:
-  eproject-network:
-    driver: bridge
+      # 4. Build & Push Auth Service
+      - name: Build & Push Auth Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth
+          file: ./auth/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/auth_service:latest
+          platforms: linux/amd64,linux/arm64
+
+      # 5. Build & Push Product Service
+      - name: Build & Push Product Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./product
+          file: ./product/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/product_service:latest
+          platforms: linux/amd64,linux/arm64
+
+      # 6. Build & Push Order Service
+      - name: Build & Push Order Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./order
+          file: ./order/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/order_service:latest
+          platforms: linux/amd64,linux/arm64
+
+      # 7. Build & Push API Gateway
+      - name: Build & Push API Gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api-gateway
+          file: ./api-gateway/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/api_gateway:latest
+          platforms: linux/amd64,linux/arm64
