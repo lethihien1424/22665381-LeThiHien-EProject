@@ -59,9 +59,26 @@ db.orders.find().pretty()
 Thao tác với github Action: Thực hiện CI/CD với dự án
 ![alt text](public/CICD.png)
 CICI Thao tác với github Action: Thực hiện CI/CD với dự án
+6. CI/CD
+Tạo token bên Docker Hub
+Copy token vào GitHub
+Vào GitHub
+Chọn responsitory
+Chọn setting -> secrets and variables -> Actions ->
+new responsitory secret -> Names(DOCKER_NAME), secret(username đăng nhập bên docker hub)
+new responsitory secret -> Names(DOCKER_PASSWORD), secret(token của Docker Hub)
+Tạo thư mục .GitHub/workflows
+Tạo file docker-cicd.yml
+Điền thông tin cho file docker-cicd.yml
+Push workflow lên GitHub để chạy CI/CD
+
+git add .github/workflows/docker-cicd.yml
+git commit -m "update3"
+git push origin main
 ![alt text](public/gitAction.png)
 CICD lien kết  với  docker 
 ![alt text](public/gitCICD_Docker.png)
 ![alt text](public/CICDdocker.png)
 ![alt text](public/cicd_Repositories.png)
 
+kk
