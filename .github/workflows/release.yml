@@ -6,7 +6,7 @@ on:
     tags: [ 'v*' ]
 
 jobs:
-  # Tự động tạo release notes và tag version hhh
+  # Tự động tạo release notes và tag version
   release:
     name: Create Release
     runs-on: ubuntu-latest
