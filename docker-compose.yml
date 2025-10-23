@@ -1,342 +1,497 @@
-version: '3.8'
+# version: '3.8'
 
+# services:
+#   # MongoDB with replica set for production
+#   mongodb:
+#     image: mongo:7
+#     container_name: mongodb_prod
+#     environment:
+#       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+#       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+#     ports:
+#       - "27017:27017"
+#     volumes:
+#       - mongodb_data_prod:/data/db
+#       - ./mongo-init:/docker-entrypoint-initdb.d:ro
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 1G
+#           cpus: '0.5'
+#         reservations:
+#           memory: 512M
+#           cpus: '0.25'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     restart: unless-stopped
+
+#   # RabbitMQ with clustering support
+#   rabbitmq:
+#     image: rabbitmq:3.13-management
+#     container_name: rabbitmq_prod
+#     environment:
+#       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+#       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+#       RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     volumes:
+#       - rabbitmq_data_prod:/var/lib/rabbitmq
+#       - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 512M
+#           cpus: '0.3'
+#         reservations:
+#           memory: 256M
+#           cpus: '0.15'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "rabbitmq-diagnostics", "ping"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     restart: unless-stopped
+
+#   # Auth service
+#   auth:
+#     image: ${DOCKER_USERNAME}/eproject-auth:${VERSION:-latest}
+#     container_name: auth_service_prod
+#     environment:
+#       - NODE_ENV=production
+#       - JWT_SECRET=${JWT_SECRET}
+#       - MONGO_URI=${MONGO_URI_PROD}
+#       - RABBITMQ_URL=${RABBITMQ_URL_PROD}
+#       - PORT=3000
+#     ports:
+#       - "3000:3000"
+#     depends_on:
+#       mongodb:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.2'
+#         reservations:
+#           memory: 128M
+#           cpus: '0.1'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     restart: unless-stopped
+
+#   # Product service
+#   product:
+#     image: ${DOCKER_USERNAME}/eproject-product:${VERSION:-latest}
+#     container_name: product_service_prod
+#     environment:
+#       - NODE_ENV=production
+#       - MONGO_URI=${MONGO_URI_PROD}
+#       - RABBITMQ_URL=${RABBITMQ_URL_PROD}
+#       - PORT=3001
+#     ports:
+#       - "3001:3001"
+#     depends_on:
+#       mongodb:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.2'
+#         reservations:
+#           memory: 128M
+#           cpus: '0.1'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     restart: unless-stopped
+
+#   # Order service
+#   order:
+#     image: ${DOCKER_USERNAME}/eproject-order:${VERSION:-latest}
+#     container_name: order_service_prod
+#     environment:
+#       - NODE_ENV=production
+#       - MONGO_URI=${MONGO_URI_PROD}
+#       - RABBITMQ_URL=${RABBITMQ_URL_PROD}
+#       - PORT=3002
+#     ports:
+#       - "3002:3002"
+#     depends_on:
+#       mongodb:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.2'
+#         reservations:
+#           memory: 128M
+#           cpus: '0.1'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     restart: unless-stopped
+
+#   # API Gateway service
+#   api-gateway:
+#     image: ${DOCKER_USERNAME}/eproject-api-gateway:${VERSION:-latest}
+#     container_name: api_gateway_prod
+#     environment:
+#       - NODE_ENV=production
+#       - AUTH_SERVICE_URL=http://auth:3000
+#       - PRODUCT_SERVICE_URL=http://product:3001
+#       - ORDER_SERVICE_URL=http://order:3002
+#       - PORT=3003
+#     ports:
+#       - "3003:3003"
+#     depends_on:
+#       auth:
+#         condition: service_healthy
+#       product:
+#         condition: service_healthy
+#       order:
+#         condition: service_healthy
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.2'
+#         reservations:
+#           memory: 128M
+#           cpus: '0.1'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#       start_period: 40s
+#     restart: unless-stopped
+
+#   # Nginx reverse proxy
+#   nginx:
+#     image: nginx:alpine
+#     container_name: nginx_prod
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+#       - ./nginx/ssl:/etc/nginx/ssl:ro
+#     depends_on:
+#       - api-gateway
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 128M
+#           cpus: '0.1'
+#         reservations:
+#           memory: 64M
+#           cpus: '0.05'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     healthcheck:
+#       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#     restart: unless-stopped
+
+#   # Prometheus monitoring
+#   prometheus:
+#     image: prom/prometheus:latest
+#     container_name: prometheus_prod
+#     ports:
+#       - "9090:9090"
+#     volumes:
+#       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#       - prometheus_data_prod:/prometheus
+#     command:
+#       - '--config.file=/etc/prometheus/prometheus.yml'
+#       - '--storage.tsdb.path=/prometheus'
+#       - '--web.console.libraries=/etc/prometheus/console_libraries'
+#       - '--web.console.templates=/etc/prometheus/consoles'
+#       - '--storage.tsdb.retention.time=200h'
+#       - '--web.enable-lifecycle'
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.2'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     restart: unless-stopped
+
+#   # Grafana dashboard
+#   grafana:
+#     image: grafana/grafana:latest
+#     container_name: grafana_prod
+#     ports:
+#       - "3004:3000"
+#     environment:
+#       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+#       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+#     volumes:
+#       - grafana_data_prod:/var/lib/grafana
+#     depends_on:
+#       - prometheus
+#     networks:
+#       - eproject-network
+#     deploy:
+#       resources:
+#         limits:
+#           memory: 256M
+#           cpus: '0.2'
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     restart: unless-stopped
+
+# volumes:
+#   mongodb_data_prod:
+#     driver: local
+#   rabbitmq_data_prod:
+#     driver: local
+#   prometheus_data_prod:
+#     driver: local
+#   grafana_data_prod:
+#     driver: local
+
+# networks:
+#   eproject-network:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.0.0/16
+# version bị bỏ qua (Docker Compose v2+ không cần)
 services:
-  # MongoDB with replica set for production
+  # ============================
+  # MongoDB
+  # ============================
   mongodb:
     image: mongo:7
-    container_name: mongodb_prod
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    container_name: mongodb
+    restart: always
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
-      - mongodb_data_prod:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+      - ./data/mongo:/data/db
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-        reservations:
-          memory: 512M
-          cpus: '0.25'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      - eproject-net
 
-  # RabbitMQ with clustering support
+  # ============================
+  # RabbitMQ
+  # ============================
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: rabbitmq_prod
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MGMT_PORT}:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
-      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - rabbitmq_data_prod:/var/lib/rabbitmq
-      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.3'
-        reservations:
-          memory: 256M
-          cpus: '0.15'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      - eproject-net
 
-  # Auth service
+  # ============================
+  # Auth Service
+  # ============================
   auth:
-    image: ${DOCKER_USERNAME}/eproject-auth:${VERSION:-latest}
-    container_name: auth_service_prod
-    environment:
-      - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET}
-      - MONGO_URI=${MONGO_URI_PROD}
-      - RABBITMQ_URL=${RABBITMQ_URL_PROD}
-      - PORT=3000
-    ports:
-      - "3000:3000"
+    image: ${DOCKER_USERNAME}/eproject-auth:${VERSION}
+    container_name: auth-service
+    restart: always
     depends_on:
-      mongodb:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - mongodb
+      - rabbitmq
+    environment:
+      MONGO_URI: ${MONGO_URI_PROD}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    ports:
+      - "4001:4001"
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      - eproject-net
 
-  # Product service
+  # ============================
+  # Product Service
+  # ============================
   product:
-    image: ${DOCKER_USERNAME}/eproject-product:${VERSION:-latest}
-    container_name: product_service_prod
-    environment:
-      - NODE_ENV=production
-      - MONGO_URI=${MONGO_URI_PROD}
-      - RABBITMQ_URL=${RABBITMQ_URL_PROD}
-      - PORT=3001
-    ports:
-      - "3001:3001"
+    image: ${DOCKER_USERNAME}/eproject-product:${VERSION}
+    container_name: product-service
+    restart: always
     depends_on:
-      mongodb:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - mongodb
+      - rabbitmq
+    environment:
+      MONGO_URI: ${MONGO_URI_PROD}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    ports:
+      - "4002:4002"
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      - eproject-net
 
-  # Order service
+  # ============================
+  # Order Service
+  # ============================
   order:
-    image: ${DOCKER_USERNAME}/eproject-order:${VERSION:-latest}
-    container_name: order_service_prod
-    environment:
-      - NODE_ENV=production
-      - MONGO_URI=${MONGO_URI_PROD}
-      - RABBITMQ_URL=${RABBITMQ_URL_PROD}
-      - PORT=3002
-    ports:
-      - "3002:3002"
+    image: ${DOCKER_USERNAME}/eproject-order:${VERSION}
+    container_name: order-service
+    restart: always
     depends_on:
-      mongodb:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - mongodb
+      - rabbitmq
+    environment:
+      MONGO_URI: ${MONGO_URI_PROD}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    ports:
+      - "4003:4003"
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      - eproject-net
 
-  # API Gateway service
+  # ============================
+  # API Gateway
+  # ============================
   api-gateway:
-    image: ${DOCKER_USERNAME}/eproject-api-gateway:${VERSION:-latest}
-    container_name: api_gateway_prod
-    environment:
-      - NODE_ENV=production
-      - AUTH_SERVICE_URL=http://auth:3000
-      - PRODUCT_SERVICE_URL=http://product:3001
-      - ORDER_SERVICE_URL=http://order:3002
-      - PORT=3003
-    ports:
-      - "3003:3003"
+    image: ${DOCKER_USERNAME}/eproject-api-gateway:${VERSION}
+    container_name: api-gateway
+    restart: always
     depends_on:
-      auth:
-        condition: service_healthy
-      product:
-        condition: service_healthy
-      order:
-        condition: service_healthy
+      - auth
+      - product
+      - order
+    ports:
+      - "${GATEWAY_PORT}:8080"
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      - eproject-net
 
-  # Nginx reverse proxy
+  # ============================
+  # Nginx (Reverse Proxy)
+  # ============================
   nginx:
     image: nginx:alpine
-    container_name: nginx_prod
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+    container_name: nginx
+    restart: always
     depends_on:
       - api-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.1'
-        reservations:
-          memory: 64M
-          cpus: '0.05'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
+      - eproject-net
 
-  # Prometheus monitoring
+  # ============================
+  # Prometheus
+  # ============================
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus_prod
+    container_name: prometheus
+    restart: always
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_PORT}:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data_prod:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: unless-stopped
+      - eproject-net
 
-  # Grafana dashboard
+  # ============================
+  # Grafana
+  # ============================
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana_prod
+    container_name: grafana
+    restart: always
     ports:
-      - "3004:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-    volumes:
-      - grafana_data_prod:/var/lib/grafana
+      - "${GRAFANA_PORT}:3000"
     depends_on:
       - prometheus
     networks:
-      - eproject-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: unless-stopped
+      - eproject-net
 
-volumes:
-  mongodb_data_prod:
-    driver: local
-  rabbitmq_data_prod:
-    driver: local
-  prometheus_data_prod:
-    driver: local
-  grafana_data_prod:
-    driver: local
-
+# ============================
+# Network
+# ============================
 networks:
-  eproject-network:
+  eproject-net:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
