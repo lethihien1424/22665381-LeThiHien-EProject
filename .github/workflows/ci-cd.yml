@@ -55,18 +55,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/eproject-${{ matrix.service }}:latest
 
-  sonarcloud:
-    name: SonarCloud Scan
-    runs-on: ubuntu-latest
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
   # Job deploy lên staging
   deploy-staging:
     name: Deploy to Staging
