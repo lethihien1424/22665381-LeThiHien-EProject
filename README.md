@@ -60,7 +60,7 @@ Thao tác với github Action: Thực hiện CI/CD với dự án
 ![alt text](public/CICD.png)
 CICI Thao tác với github Action: Thực hiện CI/CD với dự án
 ![alt text](public/gitAction.png)
-CICD lien kết  vớiới docker 
+CICD lien kết  với  docker 
 ![alt text](public/gitCICD_Docker.png)
 ![alt text](public/CICDdocker.png)
 ![alt text](public/cicd_Repositories.png)
