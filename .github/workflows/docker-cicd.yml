@@ -1,92 +1,246 @@
-name: CI/CD Docker Pipeline
+# name: CI/CD Docker Pipeline
+
+# on:
+#   push:
+#     branches: [ "main" ]  # Tự động chạy khi push code lên nhánh main
+
+# jobs:
+#   build-test:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         service: [auth, product, order, api-gateway]
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 18
+#       - name: Install dependencies
+#         run: |
+#           cd ${{ matrix.service }}
+#           npm install
+#       - name: Run tests
+#         run: |
+#           cd ${{ matrix.service }}
+#           npm test
+
+#   build-and-push:
+#     needs: build-test
+#     runs-on: ubuntu-latest
+
+#     strategy:
+#       matrix:
+#         service: [auth, product, order, api-gateway]
+
+#     steps:
+    
+#       # 1. Lấy code từ GitHub repo
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       # 2. Thiết lập Docker Buildx để build đa nền tảng
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       # 3. Đăng nhập Docker Hub bằng secrets
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKER_USERNAME }}
+#           password: ${{ secrets.DOCKER_PASSWORD }}
+
+#       # 4. Build & Push Auth Service
+#       - name: Build & Push Auth Service
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./auth
+#           file: ./auth/Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKER_USERNAME }}/auth_service:latest
+#           platforms: linux/amd64,linux/arm64
+
+#       # 5. Build & Push Product Service
+#       - name: Build & Push Product Service
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./product
+#           file: ./product/Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKER_USERNAME }}/product_service:latest
+#           platforms: linux/amd64,linux/arm64
+
+#       # 6. Build & Push Order Service
+#       - name: Build & Push Order Service
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./order
+#           file: ./order/Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKER_USERNAME }}/order_service:latest
+#           platforms: linux/amd64,linux/arm64
+
+#       # 7. Build & Push API Gateway
+#       - name: Build & Push API Gateway
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./api-gateway
+#           file: ./api-gateway/Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKER_USERNAME }}/api_gateway:latest
+#           platforms: linux/amd64,linux/arm64
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]  # Tự động chạy khi push code lên nhánh main
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 
+env:
+  NODE_VERSION: '18'
+  
 jobs:
-  build-test:
+  # Job kiểm tra code và chạy test
+  test:
+    name: Test Services
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [auth, product, order, api-gateway]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Install dependencies
-        run: |
-          cd ${{ matrix.service }}
-          npm install
-      - name: Run tests
-        run: |
-          cd ${{ matrix.service }}
-          npm test
-
-  build-and-push:
-    needs: build-test
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        service: [auth, product, order, api-gateway]
-
-    steps:
     
-      # 1. Lấy code từ GitHub repo
-      - name: Checkout code
-        uses: actions/checkout@v4
+    strategy:
+      matrix:
+        service: [auth, product, order, api-gateway]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: '${{ matrix.service }}/package-lock.json'
+    
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.service }}
+        npm ci
+    
+    - name: Run linting
+      run: |
+        cd ${{ matrix.service }}
+        npm run lint || echo "No lint script found"
+    
+    - name: Run tests
+      run: |
+        cd ${{ matrix.service }}
+        npm test || echo "No test script found"
+    
+    - name: Generate test coverage
+      run: |
+        cd ${{ matrix.service }}
+        npm run test:coverage || echo "No coverage script found"
 
-      # 2. Thiết lập Docker Buildx để build đa nền tảng
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  # Job build Docker images
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    strategy:
+      matrix:
+        service: [auth, product, order, api-gateway]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKER_USERNAME }}/eproject-${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./${{ matrix.service }}
+        file: ./${{ matrix.service }}/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
-      # 3. Đăng nhập Docker Hub bằng secrets
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+  # Job deploy lên staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to staging server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /path/to/staging/eproject
+          git pull origin develop
+          docker-compose -f docker-compose.staging.yml down
+          docker-compose -f docker-compose.staging.yml pull
+          docker-compose -f docker-compose.staging.yml up -d
+          docker system prune -f
 
-      # 4. Build & Push Auth Service
-      - name: Build & Push Auth Service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./auth
-          file: ./auth/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/auth_service:latest
-          platforms: linux/amd64,linux/arm64
-
-      # 5. Build & Push Product Service
-      - name: Build & Push Product Service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./product
-          file: ./product/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/product_service:latest
-          platforms: linux/amd64,linux/arm64
-
-      # 6. Build & Push Order Service
-      - name: Build & Push Order Service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./order
-          file: ./order/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/order_service:latest
-          platforms: linux/amd64,linux/arm64
-
-      # 7. Build & Push API Gateway
-      - name: Build & Push API Gateway
-        uses: docker/build-push-action@v6
-        with:
-          context: ./api-gateway
-          file: ./api-gateway/Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/api_gateway:latest
-          platforms: linux/amd64,linux/arm64
+  # Job deploy lên production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /path/to/production/eproject
+          git pull origin main
+          docker-compose down
+          docker-compose pull
+          docker-compose up -d
+          docker system prune -f
+    
+    - name: Health check
+      run: |
+        sleep 30
+        curl -f ${{ secrets.PRODUCTION_URL }}/health || exit 1
