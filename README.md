@@ -84,16 +84,18 @@ Push workflow lên GitHub để chạy CI/CD
 
 git add .github/workflows/docker-cicd.yml
 
-git commit -m "Cập nhật CI/CD và script test cho api-gateway"
+git commit -m "Cập nhậtd"
 
 git push"
 
 git push origin main
 
 
-![alt text](public/33.png)
+![alt text](public/3.png)
+![alt text](public/3.1.png)
 ![alt text](public/gitCICD_Docker.png)
-![alt text](public/4.png)
+
+
 CICD lien kết  với  docker 
 
 ![alt text](public/1.png)
