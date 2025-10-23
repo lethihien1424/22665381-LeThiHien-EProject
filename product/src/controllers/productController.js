@@ -110,23 +110,23 @@ class ProductController {
       res.status(500).json({ message: "Server error" });
     }
   }
-  async getProductById(req, res, next) {
-    try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      const product = await Product.findById(req.params.id); // tìm sản phẩm theo id
+  //   async getProductById(req, res, next) {
+  //     try {
+  //       const token = req.headers.authorization;
+  //       if (!token) {
+  //         return res.status(401).json({ message: "Unauthorized" });
+  //       }
+  //       const product = await Product.findById(req.params.id); // tìm sản phẩm theo id
 
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      res.status(200).json(product);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
+  //       if (!product) {
+  //         return res.status(404).json({ message: "Product not found" });
+  //       }
+  //       res.status(200).json(product);
+  //     } catch (error) {
+  //       console.error(error);
+  //       res.status(500).json({ message: "Server error" });
+  //     }
+  //   }
 }
 
 module.exports = ProductController;
