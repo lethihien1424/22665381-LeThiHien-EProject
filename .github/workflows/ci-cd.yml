@@ -76,9 +76,10 @@ jobs:
         username: ${{ secrets.STAGING_USER }}
         key: ${{ secrets.STAGING_SSH_KEY }}
         script: |
-          cd /path/to/staging/eproject
-          git pull origin develop
-          docker-compose -f docker-compose.staging.yml down
+          set -x
+          cd ~/EProject-Phase-1 || cd /home/${{ secrets.STAGING_USER }}/EProject-Phase-1 || cd /opt/eproject-staging || exit 1
+          git pull origin develop || true
+          docker-compose -f docker-compose.staging.yml down || true
           docker-compose -f docker-compose.staging.yml pull
           docker-compose -f docker-compose.staging.yml up -d
           docker system prune -f
