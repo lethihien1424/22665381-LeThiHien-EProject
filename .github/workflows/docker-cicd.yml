@@ -13,6 +13,7 @@ jobs:
         service: [auth, product, order, api-gateway]
 
     steps:
+    
       # 1. Lấy code từ GitHub repo
       - name: Checkout code
         uses: actions/checkout@v4
