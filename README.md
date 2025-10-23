@@ -58,3 +58,9 @@ db.orders.find().pretty()
 ![alt text](public/DockerOrders.png)
 Thao tác với github Action: Thực hiện CI/CD với dự án
 ![alt text](public/CICD.png)
+CICI Thao tác với github Action: Thực hiện CI/CD với dự án
+![alt text](public/gitAction.png)
+CICD lien ket voi docker
+![alt text](public/gitCICD_Docker.png)
+![alt text](public/CICDdocker.png)
+![alt text](public/cicd_Repositories.png)
