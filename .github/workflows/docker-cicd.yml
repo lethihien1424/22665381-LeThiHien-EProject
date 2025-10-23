@@ -8,6 +8,10 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        service: [auth, product, order, api-gateway]
+
     steps:
       # 1. Lấy code từ GitHub repo
       - name: Checkout code
