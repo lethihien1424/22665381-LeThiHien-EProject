@@ -85,3 +85,10 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/api_gateway:latest
           platforms: linux/amd64,linux/arm64
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        run: echo "Triển khai lên server tại đây (ví dụ: ssh, docker-compose, webhook...)"
