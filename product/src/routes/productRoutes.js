@@ -13,6 +13,6 @@ router.get(
   isAuthenticated,
   productController.getOrderStatus
 );
-//router.get("/order/:id", isAuthenticated, productController.getOrderById);
 router.get("/:id", isAuthenticated, productController.getProductById);
+
 module.exports = router;
